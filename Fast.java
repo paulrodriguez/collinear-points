@@ -28,6 +28,7 @@ public class Fast
        
        public boolean isSubSegment(Point p, Point q, double s)
        {
+           //StdOut.println("is sub segment called");
           // StdOut.print("inside pointInSegment for p = "+p.toString()+" checking segment ["+this.start.toString()+" | "+this.end.toString());
            if (s == this.slope && (q.equals(this.end) || p.equals(this.end)))
            {
@@ -77,13 +78,13 @@ public class Fast
      
        // StdOut.println(Arrays.toString(points));
         
-        //Point[] sortedPoints = new Point[points.length-1];
-        
+        Point[] sortedPoints = new Point[points.length];
+       // Segment pivot = null;
         for (int i = 0; i < points.length; i++)
         {
             Point origin = points[i];
             
-            Point[] sortedPoints = new Point[points.length];
+            sortedPoints = new Point[points.length];
             int counter = 0;
             for (int j = 0; j < sortedPoints.length; j++)
             {
@@ -93,26 +94,26 @@ public class Fast
                     counter++;
                 
             }
-            //StdOut.println("\n\ncurr point: "+origin.toString());
+           // StdOut.println("\n\ncurr point: "+origin.toString());
             //boolean currPointAdded = false;
            // System.arraycopy(points, 0, sortedPoints, 0, N);
             
-            Arrays.sort(sortedPoints, origin.SLOPE_ORDER);
+            Arrays.sort(sortedPoints, i, sortedPoints.length, origin.SLOPE_ORDER);
             //StdOut.println("ordered: "+Arrays.toString(sortedPoints));
             
             double prevSlope = 0.0;
-            int start = 1;
+            int start = i+1;
             int count = 1;
-            if (sortedPoints.length > 1)
+            if (sortedPoints.length-i > 1)
             {    
-                prevSlope = origin.slopeTo(sortedPoints[1]);
+                prevSlope = origin.slopeTo(sortedPoints[i+1]);
                 count = 2;
             }
             //  pointers group of adjacent points with equal slopes
           //  int start = 1;
             
            // int count = 2;
-            for (int j = 2; j < sortedPoints.length; j++)
+            for (int j = i+2; j < sortedPoints.length; j++)
             {
                 //StdOut.println("high counter: "+highPos+", low counter: "+lowPos);
                 double currSlope = origin.slopeTo(sortedPoints[j]);
