@@ -3,8 +3,9 @@
   * Created:      2/27/2014
   * LastUpdated:  3/1/2014
   * 
-  * Compilation:  javac Fast.java
-  * Execution:    java Fast input.txt
+  * Compilation:   javac Fast.java
+  * Execution:     java Fast input.txt
+  * Dependencies:  Point.java  
   */
 
 import java.util.Arrays;
@@ -25,12 +26,19 @@ public class Fast
            this.slope = slope;
        }
        
-       public boolean pointInSegment(Point p)
+       public boolean isSubSegment(Point p, Point q, double s)
        {
-           if (p.slopeTo(this.start) == this.slope && p.slopeTo(this.end) == this.slope)
+          // StdOut.print("inside pointInSegment for p = "+p.toString()+" checking segment ["+this.start.toString()+" | "+this.end.toString());
+           if (s == this.slope && (q.equals(this.end) || p.equals(this.end)))
            {
+              // StdOut.println(", this point is in a curretn segment");
                return true;
            }
+         //  else if(s == this.slope && p == this.end)
+          // {
+            //   return true;
+           //}
+          
            return false;
        }
    }
@@ -67,42 +75,49 @@ public class Fast
         Point prevPoint = null;
         Arrays.sort(points);
      
-        StdOut.println(Arrays.toString(points));
+       // StdOut.println(Arrays.toString(points));
         
-        Point[] sortedPoints = new Point[N];
+        //Point[] sortedPoints = new Point[points.length-1];
         
-        for (int i = 0; i < N; i++)
+        for (int i = 0; i < points.length; i++)
         {
             Point origin = points[i];
             
-            Point[] sortedPoints = new Point[points.length - 1];
+            Point[] sortedPoints = new Point[points.length];
             int counter = 0;
-            for(int j = 0; j < sortedPoints.length; j++)
+            for (int j = 0; j < sortedPoints.length; j++)
             {
-                if (j == i)
-                    continue
-                Points copy = points[j];
-                sortedPoints[counter] = copy;
-                counter++;
+               
+                    Point copy = points[j];
+                    sortedPoints[counter] = copy;
+                    counter++;
+                
             }
-            //StdOut.println("\n\ncurr point: "+points[i].toString());
+            //StdOut.println("\n\ncurr point: "+origin.toString());
             //boolean currPointAdded = false;
            // System.arraycopy(points, 0, sortedPoints, 0, N);
             
             Arrays.sort(sortedPoints, origin.SLOPE_ORDER);
-          //  StdOut.println("ordered: "+Arrays.toString(sortedPoints));
+            //StdOut.println("ordered: "+Arrays.toString(sortedPoints));
             
             double prevSlope = 0.0;
-            //  pointers group of adjacent points with equal slopes
-            int start = i+1;
-            
+            int start = 1;
             int count = 1;
-            for (int j = i+1; j < N; j++)
+            if (sortedPoints.length > 1)
+            {    
+                prevSlope = origin.slopeTo(sortedPoints[1]);
+                count = 2;
+            }
+            //  pointers group of adjacent points with equal slopes
+          //  int start = 1;
+            
+           // int count = 2;
+            for (int j = 2; j < sortedPoints.length; j++)
             {
                 //StdOut.println("high counter: "+highPos+", low counter: "+lowPos);
-                double currSlope = sortedPoints[i].slopeTo(sortedPoints[j]);
+                double currSlope = origin.slopeTo(sortedPoints[j]);
                 //StdOut.println("prev slope: "+prevSlope+", curr slope: "+currSlope);
-                if (prevSlope == currSlope || Math.abs(prevSlope - currSlope) <ERROR)
+                if (prevSlope == currSlope || Math.abs(prevSlope - currSlope) < ERROR)
                 {
                     count++;
                 }
@@ -111,38 +126,79 @@ public class Fast
                     
                     if (count >= 4)
                     {
-                        StdOut.println("count: "+count);
-                       
-                    
-                        StdOut.print(sortedPoints[i]);
-                        for (int k = start; k < j; k++)
+                       // StdOut.println("count: "+count);
+                        boolean isInSegment = false;
+                        if (segments.isEmpty())
                         {
-                            StdOut.print(" -> " + sortedPoints[k]);
+                            segments.add(new Segment(origin, sortedPoints[j-1], prevSlope));
                         }
-                        StdOut.println("");
-                        sortedPoints[i].drawTo(sortedPoints[j-1]);
+                        else
+                        {
+                            for (int k = 0; k < segments.size(); k++)
+                            {
+                                if (segments.get(k).isSubSegment(origin, sortedPoints[j-1], prevSlope))
+                                {
+                                    isInSegment = true;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        //StdOut.print(origin);
+                        if (!isInSegment)
+                        {
+                            segments.add(new Segment(origin, sortedPoints[j-1], prevSlope));
+                            StdOut.print(origin);
+                            for (int k = start; k < j; k++)
+                            {
+                                StdOut.print(" -> " + sortedPoints[k]);
+                            }
+                            StdOut.println("");
+                            origin.drawTo(sortedPoints[j-1]);
+                        }
                         
                     }
                   
                     start  = j;
-                    count = 1;
+                    count = 2;
                     prevSlope = currSlope;
                 }
             }
            
             if (count >= 4)
             {
-                 StdOut.println("count: "+count);
+                // StdOut.println("count: "+count);
              
-                StdOut.print(sortedPoints[i]);
+                boolean isInSegment = false;
+                if (segments.isEmpty())
+                {
+                    segments.add(new Segment(origin, sortedPoints[sortedPoints.length-1], prevSlope));
+                }
+                else
+                {
+                    for (int k = 0; k < segments.size(); k++)
+                    {
+                        if (segments.get(k).isSubSegment(origin, sortedPoints[sortedPoints.length-1], prevSlope))
+                        {
+                            isInSegment = true;
+                            break;
+                        }
+                    }
+                }
+                        
+                if (!isInSegment)
+                {
+                    segments.add(new Segment(origin, sortedPoints[sortedPoints.length-1], prevSlope));
+                    StdOut.print(origin);
         
                 
-                for (int k = start; k < N; k++)
-                {
-                    StdOut.print(" -> " + sortedPoints[k]);
+                    for (int k = start; k < sortedPoints.length; k++)
+                    {
+                        StdOut.print(" -> " + sortedPoints[k]);
+                    }
+                    StdOut.println("");   
+                    origin.drawTo(sortedPoints[sortedPoints.length-1]);
                 }
-                StdOut.println("");   
-                sortedPoints[i].drawTo(sortedPoints[N-1]);
             }
             
         }

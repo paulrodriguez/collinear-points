@@ -1,6 +1,6 @@
 /*************************************************************************
- * Name:
- * Email:
+ * Name: Paul Rodriguez
+ * 
  *
  * Compilation:  javac Point.java
  * Execution:

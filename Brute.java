@@ -1,8 +1,11 @@
 /**
  * Author:        Paul Rodriguez
  * Created:       2/27/2014
- * Last Updated:  2/27/2014
+ * Last Updated:  3/1/2014
  * 
+ * Compilation:   javac Brute.java
+ * Execution:     java Brute input.txt
+ * Dependencies:  Point.java
  */
 
 import java.util.Arrays;
