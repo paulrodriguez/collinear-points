@@ -10,51 +10,31 @@
 
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Hashtable;
 public class Fast
 {
    private static double ERROR = 0.00000000000000000000000001;
    
-   private static class Segment
+   private static boolean checkHashtable(Hashtable<Point, ArrayList<Double>> endPts, Point p, double s)
    {
-       private final Point start;
-       private final Point end;
-       private double slope;
-       public Segment(Point s, Point e, double slope)
+       if (endPts.get(p) == null)
        {
-           this.start = s;
-           this.end = e;
-           this.slope = slope;
-       }
-       
-       public boolean isSubSegment(Point p, Point q, double s)
-       {
-           //StdOut.println("is sub segment called");
-          // StdOut.print("inside pointInSegment for p = "+p.toString()+" checking segment ["+this.start.toString()+" | "+this.end.toString());
-           if (s == this.slope && (q.equals(this.end) || p.equals(this.end)))
-           {
-              // StdOut.println(", this point is in a curretn segment");
-               return true;
-           }
-         //  else if(s == this.slope && p == this.end)
-          // {
-            //   return true;
-           //}
-          
            return false;
        }
-   }
-   /*
-   private static boolean isEndPoint(ArrayList<Point> list, Point p)
-   {
-       for (int i = 0; i < list.size(); i++)
+       else
        {
-           if(p == list.get(i))
+           ArrayList<Double> slopes = endPts.get(p);
+           for (int i = 0; i < slopes.size(); i++)
            {
-               return true;
+               if (slopes.get(i).equals(s))
+               {
+                   return true;
+               }
            }
        }
        return false;
-   }*/
+   }
+   
     public static void main(String[] args)
     {
         StdDraw.setXscale(0, 32768);
@@ -64,7 +44,8 @@ public class Fast
         In file = new In(args[0]);
         int N = file.readInt();
         Point[] points = new Point[N];
-        ArrayList<Segment> segments = new ArrayList<Segment>();
+        //  each point can be collinear in different lines, so store it along with each slope for each line
+        Hashtable<Point, ArrayList<Double>> endPoints = new Hashtable<Point, ArrayList<Double>>();
        
         for (int i = 0; i < N; i++)
         {
@@ -76,10 +57,8 @@ public class Fast
         Point prevPoint = null;
         Arrays.sort(points);
      
-       // StdOut.println(Arrays.toString(points));
-        
         Point[] sortedPoints = new Point[points.length];
-       // Segment pivot = null;
+        
         for (int i = 0; i < points.length; i++)
         {
             Point origin = points[i];
@@ -88,18 +67,12 @@ public class Fast
             int counter = 0;
             for (int j = 0; j < sortedPoints.length; j++)
             {
-               
-                    Point copy = points[j];
-                    sortedPoints[counter] = copy;
-                    counter++;
-                
+                Point copy = points[j];
+                sortedPoints[counter] = copy;
+                counter++;    
             }
-           // StdOut.println("\n\ncurr point: "+origin.toString());
-            //boolean currPointAdded = false;
-           // System.arraycopy(points, 0, sortedPoints, 0, N);
             
             Arrays.sort(sortedPoints, i, sortedPoints.length, origin.SLOPE_ORDER);
-            //StdOut.println("ordered: "+Arrays.toString(sortedPoints));
             
             double prevSlope = 0.0;
             int start = i+1;
@@ -109,46 +82,38 @@ public class Fast
                 prevSlope = origin.slopeTo(sortedPoints[i+1]);
                 count = 2;
             }
-            //  pointers group of adjacent points with equal slopes
-          //  int start = 1;
-            
-           // int count = 2;
+           
             for (int j = i+2; j < sortedPoints.length; j++)
             {
-                //StdOut.println("high counter: "+highPos+", low counter: "+lowPos);
                 double currSlope = origin.slopeTo(sortedPoints[j]);
-                //StdOut.println("prev slope: "+prevSlope+", curr slope: "+currSlope);
+              
                 if (prevSlope == currSlope || Math.abs(prevSlope - currSlope) < ERROR)
                 {
                     count++;
                 }
                 else
-                {
-                    
+                {         
                     if (count >= 4)
-                    {
-                       // StdOut.println("count: "+count);
+                    {      
                         boolean isInSegment = false;
-                        if (segments.isEmpty())
-                        {
-                            segments.add(new Segment(origin, sortedPoints[j-1], prevSlope));
-                        }
-                        else
-                        {
-                            for (int k = 0; k < segments.size(); k++)
-                            {
-                                if (segments.get(k).isSubSegment(origin, sortedPoints[j-1], prevSlope))
-                                {
-                                    isInSegment = true;
-                                    break;
-                                }
-                            }
-                        }
-                        
-                        //StdOut.print(origin);
+                      
+                        isInSegment = checkHashtable(endPoints, sortedPoints[j-1], new Double(prevSlope));
+                     
                         if (!isInSegment)
                         {
-                            segments.add(new Segment(origin, sortedPoints[j-1], prevSlope));
+                            if (endPoints.get(sortedPoints[j-1]) == null)
+                            {
+                                ArrayList<Double> slopes = new ArrayList<Double>();
+                                slopes.add(prevSlope);
+                                endPoints.put(sortedPoints[j-1], slopes);
+                            }
+                            else
+                            {
+                                ArrayList<Double> slopes = endPoints.get(sortedPoints[j-1]);
+                                slopes.add(prevSlope);
+                                endPoints.put(sortedPoints[j-1], slopes);
+                            }
+
                             StdOut.print(origin);
                             for (int k = start; k < j; k++)
                             {
@@ -156,8 +121,7 @@ public class Fast
                             }
                             StdOut.println("");
                             origin.drawTo(sortedPoints[j-1]);
-                        }
-                        
+                        }           
                     }
                   
                     start  = j;
@@ -168,31 +132,26 @@ public class Fast
            
             if (count >= 4)
             {
-                // StdOut.println("count: "+count);
-             
                 boolean isInSegment = false;
-                if (segments.isEmpty())
-                {
-                    segments.add(new Segment(origin, sortedPoints[sortedPoints.length-1], prevSlope));
-                }
-                else
-                {
-                    for (int k = 0; k < segments.size(); k++)
-                    {
-                        if (segments.get(k).isSubSegment(origin, sortedPoints[sortedPoints.length-1], prevSlope))
-                        {
-                            isInSegment = true;
-                            break;
-                        }
-                    }
-                }
-                        
+              
+                isInSegment = checkHashtable(endPoints, sortedPoints[sortedPoints.length-1], prevSlope);
+                               
                 if (!isInSegment)
                 {
-                    segments.add(new Segment(origin, sortedPoints[sortedPoints.length-1], prevSlope));
+                    if (endPoints.get(sortedPoints[sortedPoints.length-1]) == null)
+                    {
+                        ArrayList<Double> slopes = new ArrayList<Double>();
+                        slopes.add(prevSlope);
+                        endPoints.put(sortedPoints[sortedPoints.length-1], slopes);
+                    }
+                    else
+                    {
+                        ArrayList<Double> slopes = endPoints.get(sortedPoints[sortedPoints.length-1]);
+                        slopes.add(prevSlope);
+                        endPoints.put(sortedPoints[sortedPoints.length-1], slopes);
+                    }
+                    
                     StdOut.print(origin);
-        
-                
                     for (int k = start; k < sortedPoints.length; k++)
                     {
                         StdOut.print(" -> " + sortedPoints[k]);
@@ -201,9 +160,7 @@ public class Fast
                     origin.drawTo(sortedPoints[sortedPoints.length-1]);
                 }
             }
-            
         }
-        
         StdDraw.show(0);
     }
 }
